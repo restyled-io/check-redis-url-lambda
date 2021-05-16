@@ -1,0 +1,19 @@
+{
+  "name": "check-redis-url",
+  "version": "0.0.1",
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "jest": "^25.2.7",
+    "prettier": "^2.0.4"
+  },
+  "scripts": {
+    "test": "jest",
+    "dist": "rm -rf dist/* && mkdir -p dist/ && cp index.js dist/ && yarn install --production --modules-folder dist/node_modules && (cd dist && zip -r lambda.zip .)",
+    "s3.cp": "aws --profile restyled s3 cp --acl public-read dist/lambda.zip s3://infra.restyled.io/check-redis-url.zip",
+    "release.prod": "aws --profile restyled lambda update-function-code --function-name restyled-prod-check-redis-url --zip-file fileb://dist/lambda.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.723.0",
+    "heroku-client": "^3.1.0"
+  }
+}
