@@ -43,11 +43,17 @@ jobs:
     outputs:
       key: ${{ steps.artifact.outputs.key }}
 
-  # deploy:
-  #   if: ${{ github.ref == 'refs/heads/main' }}
-  #   needs: [test, artifact]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: |
-  #       src=${{ needs.artifact.outputs.key }}
-  #       echo "Update stacks/check-redis-url, FunctionSourceKey=$src"
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: [test, artifact]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: restyled-io/gitops-deploy-action@main
+        with:
+          token: ${{ secrets.GITOPS_ACCESS_TOKEN }}
+          parameter-name: FunctionSourceKey
+          parameter-value: ${{ needs.artifact.outputs.key }}
+          committer-name: Restyled Commits
+          committer-email: commits@restyled.io
+          repository: restyled-io/ops
+          stacks: stacks/*/*/check-redis-url.yaml
