@@ -1,0 +1,21 @@
+name: CI
+
+on: pull_request
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS-KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+      ENV: test
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: c-hive/gha-yarn-cache@v1
+      - run: yarn install
+      - run: |
+          rm .env.test # Force use of CI env
+          yarn test
