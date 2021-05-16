@@ -11,7 +11,7 @@ jobs:
 
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS-KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: us-east-1
       ENV: test
 
@@ -22,3 +22,32 @@ jobs:
       - run: |
           rm .env.test # Force use of CI env
           yarn test
+
+  artifact:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+
+    steps:
+      - uses: actions/checkout@v1
+      - run: yarn run dist
+      - id: artifact
+        run: |
+          key=src/check-redis-url/${{ github.sha }}.zip
+          aws s3 cp --acl public-read dist/lambda.zip "s3://infra.restyled.io/$key"
+          echo "::set-output name=key::$key"
+
+    outputs:
+      key: ${{ steps.artifact.outputs.key }}
+
+  # deploy:
+  #   if: ${{ github.ref == 'refs/heads/main' }}
+  #   needs: [test, artifact]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: |
+  #       src=${{ needs.artifact.outputs.key }}
+  #       echo "Update stacks/check-redis-url, FunctionSourceKey=$src"
