@@ -56,4 +56,4 @@ jobs:
           committer-name: Restyled Commits
           committer-email: commits@restyled.io
           repository: restyled-io/ops
-          stacks: cg-app/stacks/*/*/prod-check-redis-url.yaml
+          stacks: cg-app/stacks/*/*/mgmt/check-redis-url.yaml
