@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const Heroku = require("heroku-client");
+const { Logger } = require("@aws-lambda-powertools/logger");
 
 // TODO: make this check *any* deployed environment
 const ENV = process.env.ENV || "prod";
@@ -8,18 +9,21 @@ const HEROKU_API_KEY = `/restyled/${ENV}/heroku-api-key`;
 const REDIS_URL_KEY = `/restyled/${ENV}/redis-url`;
 
 const ssm = new AWS.SSM();
+const logger = new Logger({ serviceName: "check-redis-url" });
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
+  logger.addContext(context);
+
   const { herokuEnv, ssmParameter } = await getRedisUrls(event);
 
   // Strip username/password for logging
   const cleansed = herokuEnv.replace(/^[^@]*@/, "redis://");
 
   if (herokuEnv === ssmParameter) {
-    console.log(`Values matched: ${cleansed}`);
+    logger.info("Values matched", { value: cleansed });
     return { status: "ok", result: "matched" };
   } else {
-    console.log(`Updating ${REDIS_URL_KEY} (${cleansed})`);
+    logger.info("Updating", { key: REDIS_URL_KEY, value: cleansed });
     const result = await putParameter({
       Name: REDIS_URL_KEY,
       Value: herokuEnv,

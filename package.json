@@ -11,6 +11,7 @@
     "dist": "rm -rf dist/* && mkdir -p dist/ && cp index.js dist/ && yarn install --production --modules-folder dist/node_modules && (cd dist && zip -r lambda.zip .)"
   },
   "dependencies": {
+    "@aws-lambda-powertools/logger": "^0.9.1",
     "aws-sdk": "^2.723.0",
     "heroku-client": "^3.1.0"
   }
