@@ -35,3 +35,10 @@ test("when values don't match", async () => {
   expect(status).toBe("ok");
   expect(result).toHaveProperty("Version");
 });
+
+test("getRedisUrls", async () => {
+  const { herokuEnv, ssmParameter } = await index.getRedisUrls({});
+
+  expect(herokuEnv).toMatch(/amazonaws\.com:/);
+  expect(ssmParameter).toBe(TEST_REDIS_URL);
+});

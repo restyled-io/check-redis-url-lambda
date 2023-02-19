@@ -11,10 +11,32 @@ const REDIS_URL_KEY = `/restyled/${ENV}/redis-url`;
 const ssm = new AWS.SSM();
 const logger = new Logger({ serviceName: "check-redis-url" });
 
+// Exported for testing
+exports.getRedisUrls = async (event) => {
+  const tokenParameter = await ssm
+    .getParameter({ Name: HEROKU_API_KEY })
+    .promise();
+  const token = tokenParameter.Parameter.Value;
+  const heroku = new Heroku({ token });
+
+  [{ REDIS_URL }, { Parameter }] = await Promise.all([
+    heroku.get("/apps/restyled-io/config-vars"),
+    ssm.getParameter({ Name: REDIS_URL_KEY }).promise(),
+  ]);
+
+  // still run all the code, but use the mock values if in test
+  return typeof event.mock === "object"
+    ? event.mock
+    : {
+        herokuEnv: REDIS_URL,
+        ssmParameter: Parameter.Value,
+      };
+};
+
 exports.handler = async (event, context) => {
   logger.addContext(context);
 
-  const { herokuEnv, ssmParameter } = await getRedisUrls(event);
+  const { herokuEnv, ssmParameter } = await exports.getRedisUrls(event);
 
   // Strip username/password for logging
   const cleansed = herokuEnv.replace(/^[^@]*@/, "redis://");
@@ -32,25 +54,5 @@ exports.handler = async (event, context) => {
       })
       .promise();
     return { status: "ok", result };
-  }
-};
-
-const getRedisUrls = async (event) => {
-  if (typeof event.mock === "object") {
-    return event.mock;
-  } else {
-    const tokenParameter = await ssm
-      .getParameter({ Name: HEROKU_API_KEY })
-      .promise();
-    const token = tokenParameter.Parameter.Value;
-    const heroku = new Heroku({ token });
-    const { REDIS_URL } = await heroku.get("/apps/restyled-io/config-vars");
-    const { Parameter } = await ssm
-      .getParameter({ Name: REDIS_URL_KEY })
-      .promise();
-    return {
-      herokuEnv: REDIS_URL,
-      ssmParameter: Parameter.Value,
-    };
   }
 };
