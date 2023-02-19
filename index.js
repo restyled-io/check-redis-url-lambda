@@ -24,11 +24,13 @@ exports.handler = async (event, context) => {
     return { status: "ok", result: "matched" };
   } else {
     logger.info("Updating", { key: REDIS_URL_KEY, value: cleansed });
-    const result = await putParameter({
-      Name: REDIS_URL_KEY,
-      Value: herokuEnv,
-      Overwrite: true,
-    });
+    const result = await ssm
+      .putParameter({
+        Name: REDIS_URL_KEY,
+        Value: herokuEnv,
+        Overwrite: true,
+      })
+      .promise();
     return { status: "ok", result };
   }
 };
@@ -37,38 +39,18 @@ const getRedisUrls = async (event) => {
   if (typeof event.mock === "object") {
     return event.mock;
   } else {
-    const tokenParameter = await getParameter({ Name: HEROKU_API_KEY });
+    const tokenParameter = await ssm
+      .getParameter({ Name: HEROKU_API_KEY })
+      .promise();
     const token = tokenParameter.Parameter.Value;
     const heroku = new Heroku({ token });
     const { REDIS_URL } = await heroku.get("/apps/restyled-io/config-vars");
-    const { Parameter } = await getParameter({ Name: REDIS_URL_KEY });
+    const { Parameter } = await ssm
+      .getParameter({ Name: REDIS_URL_KEY })
+      .promise();
     return {
       herokuEnv: REDIS_URL,
       ssmParameter: Parameter.Value,
     };
   }
-};
-
-const getParameter = async (params) => {
-  return new Promise((resolve, reject) => {
-    ssm.getParameter(params, function (err, data) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data);
-      }
-    });
-  });
-};
-
-const putParameter = async (params) => {
-  return new Promise((resolve, reject) => {
-    ssm.putParameter(params, function (err, data) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data);
-      }
-    });
-  });
 };
