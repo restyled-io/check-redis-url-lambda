@@ -17,8 +17,11 @@ jobs:
       LOG_LEVEL: ERROR
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: c-hive/gha-yarn-cache@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: yarn
+          node-version-file: '.nvmrc'
       - run: yarn install
       - run: |
           rm .env.test # Force use of CI env
@@ -33,7 +36,7 @@ jobs:
       AWS_REGION: us-east-1
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - run: yarn run dist
       - id: artifact
         run: |
